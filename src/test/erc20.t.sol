@@ -258,8 +258,4 @@ contract ERC20Test is DSTest {
         assertEq(erc20.balanceOf(user1), 1000);
         assertEq(erc20.allowance(self, user1), uint(-1));
     }
-
-    function testerc20Address() public {
-        assertEq(address(erc20), address(0x0F1c6673615352379AFC1a60e3D0234101D67eb2));
-    }
 }
