@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# shellcheck source=conf.sh
+
+VERSION='1'
+CHAIN_ID=99
+NAME="Test"
+ADDRESS=0xe58d97b6622134c0436d60daee7fbb8b965d9713 # FIX ME
+
+DOMAIN_SEPARATOR=$(seth keccak \
+     $(seth keccak $(seth --from-ascii "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"))\
+$(echo $(seth keccak $(seth --from-ascii "$NAME"))\
+$(seth keccak $(seth --from-ascii $VERSION))$(seth --to-uint256 $CHAIN_ID)\
+$(seth --to-uint256 $ADDRESS) | sed 's/0x//g'))
+echo "$DOMAIN_SEPARATOR"

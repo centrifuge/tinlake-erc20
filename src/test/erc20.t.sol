@@ -96,6 +96,19 @@ contract ERC20Test is DSTest {
     address user2;
     address self;
 
+
+    //
+    address cal = 0x0A735602a357802f553113F5831FE2fbf2F0E2e0;
+    address del = 0xdd2d5D3f7f1b35b7A0601D6A00DbB7D44Af58479;
+    bytes32 r = 0xa029632a5802f7654f9073fc59488deca725d1871071f21a8dc4146d63e2d1d1;
+    bytes32 s = 0x092c5bdbcd045a9c320129e4d1660d0ac8a5de5a469dbec1244a17a32899c700;
+    uint8 v = 28;
+    // Sig with expiry
+    bytes32 _r = 0xae757adb330721e09627a086565d36c7da42e0e2ceb445aee40e6941f186adf3;
+    bytes32 _s = 0x290cd3b03e5bfc52532da520c7c1a6f66cc7f3c99a444eebfc3a17a449d14cad;
+    uint8 _v = 28;
+
+
     function setUp() public {
         hevm = Hevm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
         hevm.warp(604411200);
@@ -258,4 +271,44 @@ contract ERC20Test is DSTest {
         assertEq(erc20.balanceOf(user1), 1000);
         assertEq(erc20.allowance(self, user1), uint(-1));
     }
+
+    function testTypehash() public {
+        assertEq(erc20.PERMIT_TYPEHASH(), 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9);
+    }
+    function testDomain_Separator() public {
+        assertEq(erc20.DOMAIN_SEPARATOR(), 0x147c441065c5a37087a7356034406901d3b34696e7f649eb463319596ee97f50);
+    }
+    function testPermit() public {
+        assertEq(erc20.nonces(cal), 0);
+        assertEq(erc20.allowance(cal, del), 0);
+        erc20.permit(cal, del, 10000, uint(-1), v, r, s);
+        assertEq(erc20.allowance(cal, del), 10000);
+        assertEq(erc20.nonces(cal), 1);
+    }
+
+    function testFailPermitAddress0() public {
+        v = 0;
+        erc20.permit(address(0), del, 0, 0, v, r, s);
+    }
+
+    function testPermitWithExpiry() public {
+        assertEq(erc20.nonces(cal), 0);
+        assertEq(erc20.allowance(cal, del), 0);
+        assertEq(now, 604411200);
+        erc20.permit(cal, del, 10000, 604411200 + 1 hours, _v, _r, _s);
+        assertEq(erc20.allowance(cal, del), 10000);
+        assertEq(erc20.nonces(cal), 1);
+    }
+
+    function testFailPermitWithExpiry() public {
+        hevm.warp(now + 2 hours);
+        assertEq(now, 604411200 + 2 hours);
+        erc20.permit(cal, del, 0, 1, _v, _r, _s);
+    }
+
+    function testFailReplay() public {
+        erc20.permit(cal, del, 0, uint(-1), v, r, s);
+        erc20.permit(cal, del, 0, uint(-1), v, r, s);
+    }
+
 }
