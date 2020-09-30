@@ -29,9 +29,13 @@ contract ERC20 {
     string  public version;
     uint256 public totalSupply;
 
+    bytes32 public DOMAIN_SEPARATOR;
+    // keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
+    bytes32 public constant PERMIT_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
+    mapping(address => uint) public nonces;
+
     mapping (address => uint)                      public balanceOf;
     mapping (address => mapping (address => uint)) public allowance;
-    mapping (address => uint)                      public nonces;
 
     event Approval(address indexed src, address indexed usr, uint wad);
     event Transfer(address indexed src, address indexed dst, uint wad);
@@ -48,6 +52,20 @@ contract ERC20 {
         wards[msg.sender] = 1;
         symbol = symbol_;
         name = name_;
+
+        uint chainId;
+        assembly {
+            chainId := chainid()
+        }
+        DOMAIN_SEPARATOR = keccak256(
+            abi.encode(
+                keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
+                keccak256(bytes(name)),
+                keccak256(bytes('1')),
+                chainId,
+                address(this)
+            )
+        );
     }
 
     // --- ERC20 ---
@@ -87,6 +105,7 @@ contract ERC20 {
         emit Approval(msg.sender, usr, wad);
         return true;
     }
+
     // --- Alias ---
     function push(address usr, uint wad) external {
         transferFrom(msg.sender, usr, wad);
@@ -96,5 +115,21 @@ contract ERC20 {
     }
     function move(address src, address dst, uint wad) external {
         transferFrom(src, dst, wad);
+    }
+
+    // --- Approve by signature ---
+    function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external {
+        require(deadline >= block.timestamp, 'cent/past-deadline');
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                '\x19\x01',
+                DOMAIN_SEPARATOR,
+                keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonces[owner]++, deadline))
+            )
+        );
+        address recoveredAddress = ecrecover(digest, v, r, s);
+        require(recoveredAddress != address(0) && recoveredAddress == owner, 'cent-erc20/invalid-sig');
+        allowance[owner][spender] = value;
+        emit Approval(owner, spender, value);
     }
 }
