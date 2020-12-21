@@ -52,6 +52,7 @@ contract ERC20 {
         wards[msg.sender] = 1;
         symbol = symbol_;
         name = name_;
+        version = 1;
 
         uint chainId;
         assembly {
@@ -61,7 +62,7 @@ contract ERC20 {
             abi.encode(
                 keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
                 keccak256(bytes(name)),
-                keccak256(bytes('1')),
+                keccak256(version),
                 chainId,
                 address(this)
             )
