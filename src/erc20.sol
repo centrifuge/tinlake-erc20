@@ -23,10 +23,10 @@ contract ERC20 {
     modifier auth { require(wards[msg.sender] == 1); _; }
 
     // --- ERC20 Data ---
-    uint8   public decimals = 18;
+    uint8   public constant decimals = 18;
     string  public name;
     string  public symbol;
-    string  public version;
+    string  public constant version = "1";
     uint256 public totalSupply;
 
     bytes32 public DOMAIN_SEPARATOR;
@@ -52,7 +52,6 @@ contract ERC20 {
         wards[msg.sender] = 1;
         symbol = symbol_;
         name = name_;
-        version = 1;
 
         uint chainId;
         assembly {
@@ -62,7 +61,7 @@ contract ERC20 {
             abi.encode(
                 keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
                 keccak256(bytes(name)),
-                keccak256(version),
+                keccak256(bytes(version)),
                 chainId,
                 address(this)
             )
