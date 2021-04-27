@@ -90,7 +90,7 @@ contract ERC20 {
         totalSupply    = add(totalSupply, wad);
         emit Transfer(address(0), usr, wad);
     }
-    function burn(address usr, uint wad) external {
+    function burn(address usr, uint wad) public {
         require(balanceOf[usr] >= wad, "cent/insufficient-balance");
         if (usr != msg.sender && allowance[usr][msg.sender] != uint(-1)) {
             require(allowance[usr][msg.sender] >= wad, "cent/insufficient-allowance");
@@ -115,6 +115,9 @@ contract ERC20 {
     }
     function move(address src, address dst, uint wad) external {
         transferFrom(src, dst, wad);
+    }
+    function burnFrom(address usr, uint wad) external {
+        burn(usr, wad);
     }
 
     // --- Approve by signature ---
