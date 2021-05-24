@@ -1,19 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2017, 2018, 2019 dbrock, rain, mrchico, lucasvo
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-//
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-pragma solidity >=0.5.15;
+pragma solidity >=0.6.0;
 
 contract ERC20 {
     // --- Auth ---
@@ -73,7 +60,7 @@ contract ERC20 {
         return transferFrom(msg.sender, dst, wad);
     }
     function transferFrom(address src, address dst, uint wad)
-        public returns (bool)
+        public virtual returns (bool)
     {
         require(balanceOf[src] >= wad, "cent/insufficient-balance");
         if (src != msg.sender && allowance[src][msg.sender] != uint(-1)) {
@@ -85,7 +72,7 @@ contract ERC20 {
         emit Transfer(src, dst, wad);
         return true;
     }
-    function mint(address usr, uint wad) external auth {
+    function mint(address usr, uint wad) external virtual auth {
         balanceOf[usr] = add(balanceOf[usr], wad);
         totalSupply    = add(totalSupply, wad);
         emit Transfer(address(0), usr, wad);
