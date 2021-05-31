@@ -28,10 +28,10 @@ contract ERC20 {
     event Transfer(address indexed src, address indexed dst, uint wad);
 
     // --- Math ---
-    function safeAdd(uint x, uint y) internal pure returns (uint z) {
+    function safeAdd_(uint x, uint y) internal pure returns (uint z) {
         require((z = x + y) >= x, "math-add-overflow");
     }
-    function safeSub(uint x, uint y) internal pure returns (uint z) {
+    function safeSub_(uint x, uint y) internal pure returns (uint z) {
         require((z = x - y) <= x, "math-sub-underflow");
     }
 
@@ -65,26 +65,26 @@ contract ERC20 {
         require(balanceOf[src] >= wad, "cent/insufficient-balance");
         if (src != msg.sender && allowance[src][msg.sender] != type(uint256).max) {
             require(allowance[src][msg.sender] >= wad, "cent/insufficient-allowance");
-            allowance[src][msg.sender] = safeSub(allowance[src][msg.sender], wad);
+            allowance[src][msg.sender] = safeSub_(allowance[src][msg.sender], wad);
         }
-        balanceOf[src] = safeSub(balanceOf[src], wad);
-        balanceOf[dst] = safeAdd(balanceOf[dst], wad);
+        balanceOf[src] = safeSub_(balanceOf[src], wad);
+        balanceOf[dst] = safeAdd_(balanceOf[dst], wad);
         emit Transfer(src, dst, wad);
         return true;
     }
     function mint(address usr, uint wad) external virtual auth {
-        balanceOf[usr] = safeAdd(balanceOf[usr], wad);
-        totalSupply    = safeAdd(totalSupply, wad);
+        balanceOf[usr] = safeAdd_(balanceOf[usr], wad);
+        totalSupply    = safeAdd_(totalSupply, wad);
         emit Transfer(address(0), usr, wad);
     }
     function burn(address usr, uint wad) public {
         require(balanceOf[usr] >= wad, "cent/insufficient-balance");
         if (usr != msg.sender && allowance[usr][msg.sender] != type(uint256).max) {
             require(allowance[usr][msg.sender] >= wad, "cent/insufficient-allowance");
-            allowance[usr][msg.sender] = safeSub(allowance[usr][msg.sender], wad);
+            allowance[usr][msg.sender] = safeSub_(allowance[usr][msg.sender], wad);
         }
-        balanceOf[usr] = safeSub(balanceOf[usr], wad);
-        totalSupply    = safeSub(totalSupply, wad);
+        balanceOf[usr] = safeSub_(balanceOf[usr], wad);
+        totalSupply    = safeSub_(totalSupply, wad);
         emit Transfer(usr, address(0), wad);
     }
     function approve(address usr, uint wad) external returns (bool) {
