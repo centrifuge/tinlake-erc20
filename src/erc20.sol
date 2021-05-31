@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2017, 2018, 2019 dbrock, rain, mrchico, lucasvo
-pragma solidity >=0.6.0;
+pragma solidity >=0.7.0;
 
 contract ERC20 {
     // --- Auth ---
@@ -28,14 +28,14 @@ contract ERC20 {
     event Transfer(address indexed src, address indexed dst, uint wad);
 
     // --- Math ---
-    function add(uint x, uint y) internal pure returns (uint z) {
+    function safeAdd(uint x, uint y) internal pure returns (uint z) {
         require((z = x + y) >= x, "math-add-overflow");
     }
-    function sub(uint x, uint y) internal pure returns (uint z) {
+    function safeSub(uint x, uint y) internal pure returns (uint z) {
         require((z = x - y) <= x, "math-sub-underflow");
     }
 
-    constructor(string memory symbol_, string memory name_) public {
+    constructor(string memory symbol_, string memory name_) {
         wards[msg.sender] = 1;
         symbol = symbol_;
         name = name_;
@@ -63,28 +63,28 @@ contract ERC20 {
         public virtual returns (bool)
     {
         require(balanceOf[src] >= wad, "cent/insufficient-balance");
-        if (src != msg.sender && allowance[src][msg.sender] != uint(-1)) {
+        if (src != msg.sender && allowance[src][msg.sender] != type(uint256).max) {
             require(allowance[src][msg.sender] >= wad, "cent/insufficient-allowance");
-            allowance[src][msg.sender] = sub(allowance[src][msg.sender], wad);
+            allowance[src][msg.sender] = safeSub(allowance[src][msg.sender], wad);
         }
-        balanceOf[src] = sub(balanceOf[src], wad);
-        balanceOf[dst] = add(balanceOf[dst], wad);
+        balanceOf[src] = safeSub(balanceOf[src], wad);
+        balanceOf[dst] = safeAdd(balanceOf[dst], wad);
         emit Transfer(src, dst, wad);
         return true;
     }
     function mint(address usr, uint wad) external virtual auth {
-        balanceOf[usr] = add(balanceOf[usr], wad);
-        totalSupply    = add(totalSupply, wad);
+        balanceOf[usr] = safeAdd(balanceOf[usr], wad);
+        totalSupply    = safeAdd(totalSupply, wad);
         emit Transfer(address(0), usr, wad);
     }
     function burn(address usr, uint wad) public {
         require(balanceOf[usr] >= wad, "cent/insufficient-balance");
-        if (usr != msg.sender && allowance[usr][msg.sender] != uint(-1)) {
+        if (usr != msg.sender && allowance[usr][msg.sender] != type(uint256).max) {
             require(allowance[usr][msg.sender] >= wad, "cent/insufficient-allowance");
-            allowance[usr][msg.sender] = sub(allowance[usr][msg.sender], wad);
+            allowance[usr][msg.sender] = safeSub(allowance[usr][msg.sender], wad);
         }
-        balanceOf[usr] = sub(balanceOf[usr], wad);
-        totalSupply    = sub(totalSupply, wad);
+        balanceOf[usr] = safeSub(balanceOf[usr], wad);
+        totalSupply    = safeSub(totalSupply, wad);
         emit Transfer(usr, address(0), wad);
     }
     function approve(address usr, uint wad) external returns (bool) {

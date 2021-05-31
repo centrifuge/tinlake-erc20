@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2015-2019  DappHub, LLC,
 // Copyright (C) 2019 lucasvo
-pragma solidity >=0.6.0;
+pragma solidity >=0.7.0;
 
 import "ds-test/test.sol";
 
@@ -10,7 +10,7 @@ import "../erc20.sol";
 contract ERC20User {
     ERC20 erc20;
 
-    constructor(ERC20 erc20_) public {
+    constructor(ERC20 erc20_)  {
         erc20 = erc20_;
     }
 
@@ -51,7 +51,7 @@ contract ERC20User {
         public
         returns (bool)
     {
-        return erc20.approve(usr, uint(-1));
+        return erc20.approve(usr, type(uint256).max);
     }
     function doMint(uint wad) public {
         erc20.mint(address(this), wad);
@@ -95,7 +95,7 @@ contract ERC20Test is DSTest {
 
 
     function setUp() public {
-        hevm = Hevm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
+        hevm = Hevm(HEVM_ADDRESS);
         hevm.warp(604411200);
         erc20 = createERC20();
         erc20.mint(address(this), initialBalanceThis);
@@ -228,13 +228,13 @@ contract ERC20Test is DSTest {
     }
     function testTrusting() public {
         assertEq(erc20.allowance(self, user2), 0);
-        erc20.approve(user2, uint(-1));
-        assertEq(erc20.allowance(self, user2), uint(-1));
+        erc20.approve(user2, type(uint256).max);
+        assertEq(erc20.allowance(self, user2), type(uint256).max);
         erc20.approve(user2, 0);
         assertEq(erc20.allowance(self, user2), 0);
     }
     function testTrustedTransferFrom() public {
-        erc20.approve(user1, uint(-1));
+        erc20.approve(user1, type(uint256).max);
         ERC20User(user1).doTransferFrom(self, user2, 200);
         assertEq(erc20.balanceOf(user2), 200);
     }
@@ -250,11 +250,11 @@ contract ERC20Test is DSTest {
     function testApproveWillNotModifyAllowance() public {
         assertEq(erc20.allowance(self, user1), 0);
         assertEq(erc20.balanceOf(user1), 0);
-        erc20.approve(user1, uint(-1));
-        assertEq(erc20.allowance(self, user1), uint(-1));
+        erc20.approve(user1, type(uint256).max);
+        assertEq(erc20.allowance(self, user1), type(uint256).max);
         ERC20User(user1).doTransferFrom(self, user1, 1000);
         assertEq(erc20.balanceOf(user1), 1000);
-        assertEq(erc20.allowance(self, user1), uint(-1));
+        assertEq(erc20.allowance(self, user1), type(uint256).max);
     }
 
     function testTypehash() public {
@@ -266,7 +266,7 @@ contract ERC20Test is DSTest {
     function testPermit() public {
         assertEq(erc20.nonces(cal), 0);
         assertEq(erc20.allowance(cal, del), 0);
-        erc20.permit(cal, del, 10000, uint(-1), v, r, s);
+        erc20.permit(cal, del, 10000, type(uint256).max, v, r, s);
         assertEq(erc20.allowance(cal, del), 10000);
         assertEq(erc20.nonces(cal), 1);
     }
@@ -279,21 +279,21 @@ contract ERC20Test is DSTest {
     function testPermitWithExpiry() public {
         assertEq(erc20.nonces(cal), 0);
         assertEq(erc20.allowance(cal, del), 0);
-        assertEq(now, 604411200);
+        assertEq(block.timestamp, 604411200);
         erc20.permit(cal, del, 10000, 604411200 + 1 hours, _v, _r, _s);
         assertEq(erc20.allowance(cal, del), 10000);
         assertEq(erc20.nonces(cal), 1);
     }
 
     function testFailPermitWithExpiry() public {
-        hevm.warp(now + 2 hours);
-        assertEq(now, 604411200 + 2 hours);
+        hevm.warp(block.timestamp + 2 hours);
+        assertEq(block.timestamp, 604411200 + 2 hours);
         erc20.permit(cal, del, 0, 1, _v, _r, _s);
     }
 
     function testFailReplay() public {
-        erc20.permit(cal, del, 0, uint(-1), v, r, s);
-        erc20.permit(cal, del, 0, uint(-1), v, r, s);
+        erc20.permit(cal, del, 0, type(uint256).max, v, r, s);
+        erc20.permit(cal, del, 0, type(uint256).max, v, r, s);
     }
 
 }
